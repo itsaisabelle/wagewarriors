@@ -28,7 +28,14 @@ class recruiter(models.Model):
         return self.name
     
 class jobsAppliedTo(models.Model):
-    jobIDFK = models.IntegerField()
-    jobSeekerIDFK = models.IntegerField()
+    jobIDFK = models.ForeignKey('jobs.job', on_delete=models.CASCADE)
+    jobSeekerIDFK = models.ForeignKey('account.jobSeeker', on_delete=models.CASCADE)
     note = models.TextField(blank=True)
-    status = models.enums.TextChoices('Applied', 'Review', 'Interview', 'Offer', 'Closed', 'Rejected', name='application_status')
+    status = models.CharField(max_length=20, choices=[
+        ('Applied', 'Applied'),
+        ('Review', 'Review'),
+        ('Interview', 'Interview'),
+        ('Offer', 'Offer'),
+        ('Closed', 'Closed'),
+        ('Rejected', 'Rejected')
+    ], default='Applied')

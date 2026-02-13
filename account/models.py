@@ -1,11 +1,13 @@
 from django.db import models
+from django.contrib.auth.models import AbstractUser
 
 # Create your models here.
+class User(AbstractUser):
+    is_job_seeker = models.BooleanField(default=False)
+    is_recruiter = models.BooleanField(default=False)
+
 class jobSeeker(models.Model):
-    name = models.CharField(max_length=100)
-    email = models.EmailField(unique=True)
-    username = models.CharField(max_length=100, unique=True)
-    password = models.CharField(max_length=100)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='job_seeker_profile')
     currentLocation = models.CharField(max_length=100, blank=True)
     headline = models.CharField(max_length=255, blank=True)
     skills = models.TextField(blank=True)
@@ -15,23 +17,18 @@ class jobSeeker(models.Model):
     isPrivate = models.BooleanField(default=False)
 
     def __str__(self):
-        return self.name
-
+        return self.user.username
 
 class recruiter(models.Model):
-    name = models.CharField(max_length=100)
-    email = models.EmailField(unique=True)
-    username = models.CharField(max_length=100, unique=True)
-    password = models.CharField(max_length=100)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='recruiter_profile')
     company_name = models.CharField(max_length=255, blank=True)
-    isAdmin = models.BooleanField(default=False)
 
     def __str__(self):
-        return self.name
-    
+        return self.user.username
+
 class jobsAppliedTo(models.Model):
     jobIDFK = models.ForeignKey('jobs.job', on_delete=models.CASCADE)
-    jobSeekerIDFK = models.ForeignKey('account.jobSeeker', on_delete=models.CASCADE)
+    jobSeekerIDFK = models.ForeignKey(jobSeeker, on_delete=models.CASCADE)
     note = models.TextField(blank=True)
     status = models.CharField(max_length=20, choices=[
         ('Applied', 'Applied'),
@@ -41,6 +38,6 @@ class jobsAppliedTo(models.Model):
         ('Closed', 'Closed'),
         ('Rejected', 'Rejected')
     ], default='Applied')
-    
+
     def __str__(self):
-        return self.jobSeekerIDFK.name + " - " + self.jobIDFK.title
+        return f"{self.jobSeekerIDFK.user.username} - {self.jobIDFK.title}"

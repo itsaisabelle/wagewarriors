@@ -1,28 +1,85 @@
-from django.shortcuts import render
-from .forms import seekerForm, recruiterForm
-from django.shortcuts import redirect
+from django.shortcuts import render, redirect
+from django.contrib.auth import login as auth_login # Alias to avoid name conflict
+from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.decorators import login_required
+from .forms import SeekerSignupForm, RecruiterSignupForm
+from .models import jobSeeker, recruiter
+from django.contrib.auth import logout
 
 # Create your views here.
+#Landing page to let users sign up as a job seeker or recruiter
 def index(request):
     template_data = {}
     template_data['title'] = 'Account'
     return render(request, 'account/index.html', {'template_data': template_data})
 
-def login(request):
-    return render(request, 'account/login.html')
+# Login view
+def login_view(request):
+    if request.method == 'POST':
+        form = AuthenticationForm(request, data=request.POST)
+
+        if form.is_valid():
+            user = form.get_user()
+            auth_login(request, user)
+
+            if user.is_job_seeker:
+                return redirect('account.profile')
+            elif user.is_recruiter:
+                return redirect('account.profile')
+            else:
+                return redirect('home.index')
+        else:
+            pass
+    else:
+        form = AuthenticationForm()
+    
+
+    return render(request, 'account/login.html', {'form': form})
+
+
+# Loads user's profile
+@login_required
+def profile(request):
+    template_data = {}
+    template_data['title'] = 'Profile'
+    return render(request, 'account/profile.html', {'template_data': template_data, 'user': request.user})
+
+#logout view
+@login_required
+def logout_view(request):
+    logout(request)
+    return redirect('home.index')
 
 def seeker_signup(request):
-    form = seekerForm(request.POST)
+    if request.method == 'POST':
+        form = SeekerSignupForm(request.POST)
+
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.set_password(form.cleaned_data['password'])
+            user.is_job_seeker = True
+            user.save()
+            jobSeeker.objects.create(user=user)
+            return redirect('account.login') 
+    else:
+        form = SeekerSignupForm()
     
-    if request.method == 'POST' and form.is_valid():
-        form.save()
-        return redirect('account.login') #change to a redirect to the login page
     return render(request, 'account/seeker_signup.html', {'form': form})
     
 def recruiter_signup(request):
-    form = recruiterForm(request.POST)
+    if request.method == 'POST':
+        form = RecruiterSignupForm(request.POST)
 
-    if request.method == 'POST' and form.is_valid():
-        form.save()
-        return redirect('account.login') #change to a redirect to the login page
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.set_password(form.cleaned_data['password'])
+            user.is_recruiter = True
+            user.save()
+            recruiter_profile = recruiter.objects.create(user=user)
+            recruiter_profile.company_name = form.cleaned_data.get('company_name', '')
+            recruiter_profile.save()
+            return redirect('account.login')
+    else:
+        form = RecruiterSignupForm()
+    
     return render(request, 'account/recruiter_signup.html', {'form': form})

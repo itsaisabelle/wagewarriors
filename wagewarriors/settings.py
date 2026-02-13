@@ -128,6 +128,9 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Tell Django to use your custom User model located in the 'account' app
+AUTH_USER_MODEL = 'account.User'
+
 STATICFILES_DIRS = [
     BASE_DIR / 'wagewarriors/static/',
 ]

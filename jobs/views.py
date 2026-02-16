@@ -18,3 +18,14 @@ def apply(request, id):
     }
 
     return render(request, 'jobs/applied.html', context)
+
+def edit(request, id):
+    job_instance = get_object_or_404(job, id=id)
+    if job_instance.company != request.user.recruiter_profile.company_name:
+        return redirect('jobs.index')
+    
+    if request.method == "POST":
+
+        pass
+
+    return render(request, 'jobs/edit.html', {'job': job_instance})
